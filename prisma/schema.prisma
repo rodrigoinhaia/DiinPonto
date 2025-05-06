@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum RecordType {
+  ENTRY
+  EXIT
+}
+
+enum CorrectionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id                String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  password          String
+  pin               String    // PIN criptografado (bcrypt), 6 dígitos
+  role              Role      @default(EMPLOYEE)
+  employeeId        String    @unique
+  barcode           String    @unique
+  department        Department? @relation(fields: [departmentId], references: [id])
+  departmentId      String?
+  managedDepartment Department? @relation("DepartmentManager")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  timeRecords       TimeRecord[]
+  corrections       CorrectionRequest[] @relation("RequestedBy")
+  approvals         CorrectionRequest[] @relation("ApprovedBy")
+  workSchedule      WorkSchedule?
+  kioskAuthLogs     KioskAuthLog[]
+}
+
+model Department {
+  id                String    @id @default(cuid())
+  name              String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  users             User[]
+  manager           User?     @relation("DepartmentManager", fields: [managerId], references: [id])
+  managerId         String?   @unique
+}
+
+model TimeRecord {
+  id        String      @id @default(cuid())
+  userId    String
+  type      RecordType
+  timestamp DateTime    @default(now())
+  location  Json?       // { latitude: number, longitude: number }
+  device    String      // web, mobile, kiosk
+  user      User        @relation(fields: [userId], references: [id])
+  correction CorrectionRequest?
+}
+
+model CorrectionRequest {
+  id          String           @id @default(cuid())
+  timeRecordId String          @unique
+  timeRecord  TimeRecord       @relation(fields: [timeRecordId], references: [id])
+  requestedById String
+  requestedBy User             @relation("RequestedBy", fields: [requestedById], references: [id])
+  approvedById String?
+  approvedBy  User?            @relation("ApprovedBy", fields: [approvedById], references: [id])
+  status      CorrectionStatus @default(PENDING)
+  reason      String
+  evidence    String?          // URL ou base64 da evidência
+  newTimestamp DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model WorkSchedule {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  startTime   DateTime
+  endTime     DateTime
+  breakStart  DateTime?
+  breakEnd    DateTime?
+  daysOfWeek  Int[]    // 0-6 (Domingo-Sábado)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model KioskAuthLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  method      String   // 'PIN' ou 'BARCODE'
+  success     Boolean
+  attemptAt   DateTime @default(now())
+  ip          String?
+  userAgent   String?
+  message     String?
+} 
