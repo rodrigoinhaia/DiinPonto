@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server'
-import { getUserByBarcode, getLastTimeRecord, createTimeRecord } from '@/lib/services/timeRecord'
+import { getUserById, getLastTimeRecord, createTimeRecord } from '@/lib/services/timeRecord'
 
 export async function POST(request: Request) {
   try {
     const data = await request.json()
-    const { barcode, location, device } = data
+    const { userId, type, location, device } = data
 
-    if (!barcode || !device) {
+    if (!userId || !type || !device) {
       return NextResponse.json(
         { error: 'Dados incompletos' },
         { status: 400 }
       )
     }
 
-    const user = await getUserByBarcode(barcode)
+    const user = await getUserById(userId)
 
     if (!user) {
       return NextResponse.json(
@@ -23,7 +23,35 @@ export async function POST(request: Request) {
     }
 
     const lastRecord = await getLastTimeRecord(user.id)
-    const type = !lastRecord || lastRecord.type === 'EXIT' ? 'ENTRY' : 'EXIT'
+
+    // Validação do tipo de registro
+    if (type === 'ENTRY' && lastRecord && lastRecord.type !== 'EXIT') {
+      return NextResponse.json(
+        { error: 'Já existe um registro de entrada ativo' },
+        { status: 400 }
+      )
+    }
+
+    if (type === 'PAUSE' && (!lastRecord || lastRecord.type !== 'ENTRY')) {
+      return NextResponse.json(
+        { error: 'Não é possível registrar pausa sem um registro de entrada' },
+        { status: 400 }
+      )
+    }
+
+    if (type === 'RETURN' && (!lastRecord || lastRecord.type !== 'PAUSE')) {
+      return NextResponse.json(
+        { error: 'Não é possível registrar retorno sem um registro de pausa' },
+        { status: 400 }
+      )
+    }
+
+    if (type === 'EXIT' && (!lastRecord || lastRecord.type !== 'RETURN')) {
+      return NextResponse.json(
+        { error: 'Não é possível registrar saída sem um registro de retorno' },
+        { status: 400 }
+      )
+    }
 
     const record = await createTimeRecord({
       userId: user.id,

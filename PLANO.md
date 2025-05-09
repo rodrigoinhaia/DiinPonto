@@ -55,11 +55,11 @@
     - [x] Visualização própria
     - [x] Solicitação de correções
     - [x] Histórico pessoal
-- [ ] Implementar fluxo de aprovações
-  - [ ] Solicitação de correção
-  - [ ] Notificação ao gestor
-  - [ ] Aprovação/Rejeição
-  - [ ] Histórico de alterações
+- [x] Implementar fluxo de aprovações
+  - [x] Solicitação de correção
+  - [x] Notificação ao gestor
+  - [x] Aprovação/Rejeição
+  - [x] Histórico de alterações
 - [ ] Implementar restrições de acesso
   - [x] Middleware por perfil
   - [x] Validação de permissões
@@ -77,20 +77,33 @@
 - [x] Atualizar rotas de cadastro/edição de usuário para aceitar e criptografar PIN
 - [x] Atualizar seed para criar admin com PIN
 - [x] Criar tabela de logs de autenticação do quiosque (KioskAuthLog)
-- [ ] Criar rota pública `/api/kiosk/auth` para autenticação por PIN ou barcode
-- [ ] Implementar logs/auditoria de tentativas de autenticação (sucesso/falha)
-- [ ] Refatorar tela do quiosque para layout centralizado com 4 botões (entrada, pausa, retorno, saída), relógio no topo, e opções de autenticação por PIN ou barcode
-- [ ] Feedback visual de sucesso/erro na autenticação e registro de ponto
-- [ ] Limitar tentativas de PIN (ex: 5 tentativas, bloqueio temporário)
+- [x] Criar rota pública `/api/kiosk/auth` para autenticação por PIN ou barcode
+- [x] Implementar logs/auditoria de tentativas de autenticação (sucesso/falha)
+- [x] Refatorar tela do quiosque para layout centralizado com 4 botões (entrada, pausa, retorno, saída), relógio no topo, e opções de autenticação por PIN ou barcode
+- [x] Feedback visual de sucesso/erro na autenticação e registro de ponto
+- [x] Limitar tentativas de PIN (ex: 5 tentativas, bloqueio temporário)
 - [ ] Atualizar documentação técnica e de uso
-- [ ] Integrar leitor de código de barras
-  - [ ] Configurar leitor
-  - [ ] Implementar leitura
-  - [ ] Validação de crachá
-- [ ] Integrar impressora térmica
-  - [ ] Configurar impressora
-  - [ ] Implementar impressão de comprovante
-  - [ ] Formatação do comprovante
+- [x] Integrar leitor de código de barras
+  - [x] Configurar leitor
+  - [x] Implementar leitura
+  - [x] Validação de crachá
+- [x] Integrar impressora térmica
+  - [x] Configurar impressora
+  - [x] Instalar drivers necessários
+  - [x] Configurar porta de comunicação
+  - [x] Testar conexão
+  - [x] Implementar impressão de comprovantes
+  - [x] Criar layout do comprovante
+  - [x] Implementar comandos de impressão
+  - [x] Adicionar cabeçalho com dados da empresa
+  - [x] Incluir dados do registro
+  - [x] Adicionar espaço para assinatura
+  - [x] Implementar corte automático do papel
+  - [x] Testar impressão
+  - [x] Verificar qualidade da impressão
+  - [x] Testar diferentes tipos de registro
+  - [x] Validar formatação do texto
+  - [x] Confirmar corte do papel
 
 ## 6. Relatórios e Dashboard (Em Desenvolvimento) 📊
 - [x] Implementar dashboard administrativo
@@ -127,10 +140,10 @@
 - [ ] Configurar CI/CD
 
 #### 9. Documentação
-- [ ] Documentar API
-- [ ] Documentar componentes
-- [ ] Criar manual do usuário
-- [ ] Criar manual técnico
+- [x] Documentar API
+- [x] Documentar componentes
+- [x] Criar manual do usuário
+- [x] Criar manual técnico
 
 #### 10. Deploy e Infraestrutura
 - [ ] Configurar ambiente de produção
@@ -325,3 +338,20 @@ Base64 encoded
 Signing key 
 NTNv7j0TuYARvmNMmWXo6fKvM4o6nv/aUi9ryX38ZH+L1bkrnD1ObOQ8JAUmHCBq7Iy7otZcyAagBLHVKvvYaIpmMuxmARQ97jUVG16Jkpkp1wXOPsrF9zwew6TpczyHkHgX5EuLg2MeBuiT/qJACs1J0apruOOJCg/gOtkjB4c=
 NTNv7j0TuYARvmNMmWXo6fKvM4o6nv/aUi9ryX38ZH+L1bkrnD1ObOQ8JAUmHCBq7Iy7otZcyAagBLHVKvvYaIpmMuxmARQ97jUVG16Jkpkp1wXOPsrF9zwew6TpczyHkHgX5EuLg2MeBuiT/qJACs1J0apruOOJCg/gOtkjB4c=
+
+## Fluxo de Aprovação
+- [x] Implementar solicitação de correção
+  - [x] Criar formulário de solicitação
+  - [x] Implementar validações
+  - [x] Adicionar upload de evidências
+- [x] Implementar notificações
+  - [x] Notificar gestores sobre novas solicitações
+  - [x] Notificar funcionários sobre status da solicitação
+- [x] Implementar aprovação/rejeição
+  - [x] Criar interface para gestores
+  - [x] Implementar lógica de aprovação
+  - [x] Atualizar registro após aprovação
+- [x] Implementar histórico de solicitações
+  - [x] Criar listagem de solicitações
+  - [x] Adicionar filtros por status
+  - [x] Exibir detalhes da solicitação

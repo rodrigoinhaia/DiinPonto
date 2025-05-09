@@ -85,8 +85,14 @@ export async function getTimeRecordsByDateRange(from: Date, to: Date) {
   })
 }
 
+export async function getUserById(id: string) {
+  return prisma.user.findUnique({
+    where: { id }
+  })
+}
+
 export async function getUserByBarcode(barcode: string) {
   return prisma.user.findUnique({
-    where: { barcode },
+    where: { barcode }
   })
 } 
