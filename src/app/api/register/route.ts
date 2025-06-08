@@ -5,7 +5,7 @@ import { Role } from '@prisma/client'
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password, role, employeeId, barcode, departmentId } = await request.json()
+    const { name, email, password, employeeId, barcode, department } = await request.json()
 
     // Verificar se o usuário já existe
     const existingUser = await prisma.user.findFirst({
@@ -32,6 +32,16 @@ export async function POST(request: Request) {
     const hashedPassword = await hash(password, 12)
     const hashedPin = await hash(pin, 12)
 
+    // Criar ou encontrar departamento
+    let departmentRecord = null
+    if (department && department.trim() !== '') {
+      departmentRecord = await prisma.department.upsert({
+        where: { name: department },
+        update: {},
+        create: { name: department }
+      })
+    }
+
     // Criar usuário
     const user = await prisma.user.create({
       data: {
@@ -39,10 +49,10 @@ export async function POST(request: Request) {
         email,
         password: hashedPassword,
         pin: hashedPin,
-        role: role as Role,
+        role: Role.EMPLOYEE, // Por padrão, novos usuários são funcionários
         employeeId,
         barcode,
-        departmentId: departmentId || null,
+        departmentId: departmentRecord?.id || null,
       },
       include: {
         department: true
@@ -53,45 +63,12 @@ export async function POST(request: Request) {
     const { password: _, pin: __, ...userWithoutSensitiveData } = user
 
     return NextResponse.json({
+      message: 'Usuário criado com sucesso',
       user: userWithoutSensitiveData,
-      generatedPin: pin // Retornar PIN apenas na criação para o admin configurar
+      generatedPin: pin // Retornar PIN apenas na criação
     })
   } catch (error) {
     console.error('Erro ao criar usuário:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function GET() {
-  try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        employeeId: true,
-        barcode: true,
-        createdAt: true,
-        updatedAt: true,
-        department: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    return NextResponse.json({ users })
-  } catch (error) {
-    console.error('Erro ao buscar usuários:', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

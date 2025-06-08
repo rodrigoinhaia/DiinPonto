@@ -34,6 +34,8 @@
     "@types/react-day-picker": "^5.2.1",
     "@types/react-dom": "^18.2.0",
     "@types/recharts": "1.8.29",
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
     "autoprefixer": "^10.4.17",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",

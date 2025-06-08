@@ -1,98 +1,158 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { checkPermission } from '@/lib/permissions'
 import { hash } from 'bcryptjs'
+import { Role } from '@prisma/client'
 
-export async function PUT(
-  req: Request,
+export async function GET(
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return new NextResponse('Unauthorized', { status: 401 })
+    const user = await prisma.user.findUnique({
+      where: { id: params.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        employeeId: true,
+        barcode: true,
+        createdAt: true,
+        updatedAt: true,
+        department: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      )
     }
 
-    const hasPermission = await checkPermission(
-      session.user.id,
-      'manage',
-      'user'
+    return NextResponse.json({ user })
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
     )
-    if (!hasPermission) {
-      return new NextResponse('Forbidden', { status: 403 })
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { name, email, role, employeeId, barcode, departmentId, password } = await request.json()
+
+    // Verificar se o usuário existe
+    const existingUser = await prisma.user.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!existingUser) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      )
     }
 
-    const body = await req.json()
-    const { name, email, password, pin, role, employeeId, departmentId, barcode } = body
+    // Verificar conflitos com outros usuários
+    const conflictUser = await prisma.user.findFirst({
+      where: {
+        AND: [
+          { id: { not: params.id } },
+          {
+            OR: [
+              { email },
+              { employeeId },
+              { barcode }
+            ]
+          }
+        ]
+      }
+    })
 
-    if (!name || !email || !role || !employeeId) {
-      return new NextResponse('Missing required fields', { status: 400 })
+    if (conflictUser) {
+      return NextResponse.json(
+        { error: 'Já existe outro usuário com este email, ID de funcionário ou código de barras' },
+        { status: 400 }
+      )
     }
 
-    if (pin && !/^\d{6}$/.test(pin)) {
-      return new NextResponse('PIN deve conter exatamente 6 dígitos numéricos.', { status: 400 })
-    }
-
+    // Preparar dados para atualização
     const updateData: any = {
       name,
       email,
-      role,
+      role: role as Role,
       employeeId,
+      barcode,
       departmentId: departmentId || null,
-      barcode: barcode || employeeId,
     }
 
-    if (password) {
-      updateData.password = await hash(password, 10)
-    }
-    if (pin) {
-      updateData.pin = await hash(pin, 10)
+    // Se uma nova senha foi fornecida, hash ela
+    if (password && password.trim() !== '') {
+      updateData.password = await hash(password, 12)
     }
 
+    // Atualizar usuário
     const user = await prisma.user.update({
-      where: {
-        id: params.id,
-      },
+      where: { id: params.id },
       data: updateData,
+      include: {
+        department: true
+      }
     })
 
-    return NextResponse.json(user)
+    // Remover dados sensíveis da resposta
+    const { password: _, pin: __, ...userWithoutSensitiveData } = user
+
+    return NextResponse.json({ user: userWithoutSensitiveData })
   } catch (error) {
-    console.error('Error updating user:', error)
-    return new NextResponse('Internal Server Error', { status: 500 })
+    console.error('Erro ao atualizar usuário:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
   }
 }
 
 export async function DELETE(
-  req: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return new NextResponse('Unauthorized', { status: 401 })
-    }
-
-    const hasPermission = await checkPermission(
-      session.user.id,
-      'manage',
-      'user'
-    )
-    if (!hasPermission) {
-      return new NextResponse('Forbidden', { status: 403 })
-    }
-
-    await prisma.user.delete({
-      where: {
-        id: params.id,
-      },
+    // Verificar se o usuário existe
+    const existingUser = await prisma.user.findUnique({
+      where: { id: params.id }
     })
 
-    return new NextResponse(null, { status: 204 })
+    if (!existingUser) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Deletar usuário
+    await prisma.user.delete({
+      where: { id: params.id }
+    })
+
+    return NextResponse.json({ message: 'Usuário deletado com sucesso' })
   } catch (error) {
-    console.error('Error deleting user:', error)
-    return new NextResponse('Internal Server Error', { status: 500 })
+    console.error('Erro ao deletar usuário:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
   }
-} 
+}
+

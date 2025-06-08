@@ -1,19 +1,25 @@
 import { NextResponse } from 'next/server'
-import { getUserById, getLastTimeRecord, createTimeRecord } from '@/lib/services/timeRecord'
+import { prisma } from '@/lib/prisma'
+import { compare } from 'bcryptjs'
 
 export async function POST(request: Request) {
   try {
-    const data = await request.json()
-    const { userId, type, location, device } = data
+    const { userId, type, location, device } = await request.json()
 
-    if (!userId || !type || !device) {
+    if (!userId || !type) {
       return NextResponse.json(
-        { error: 'Dados incompletos' },
+        { error: 'ID do usuário e tipo são obrigatórios' },
         { status: 400 }
       )
     }
 
-    const user = await getUserById(userId)
+    // Verificar se o usuário existe
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        department: true
+      }
+    })
 
     if (!user) {
       return NextResponse.json(
@@ -22,56 +28,77 @@ export async function POST(request: Request) {
       )
     }
 
-    const lastRecord = await getLastTimeRecord(user.id)
-
-    // Validação do tipo de registro
-    if (type === 'ENTRY' && lastRecord && lastRecord.type !== 'EXIT') {
-      return NextResponse.json(
-        { error: 'Já existe um registro de entrada ativo' },
-        { status: 400 }
-      )
-    }
-
-    if (type === 'PAUSE' && (!lastRecord || lastRecord.type !== 'ENTRY')) {
-      return NextResponse.json(
-        { error: 'Não é possível registrar pausa sem um registro de entrada' },
-        { status: 400 }
-      )
-    }
-
-    if (type === 'RETURN' && (!lastRecord || lastRecord.type !== 'PAUSE')) {
-      return NextResponse.json(
-        { error: 'Não é possível registrar retorno sem um registro de pausa' },
-        { status: 400 }
-      )
-    }
-
-    if (type === 'EXIT' && (!lastRecord || lastRecord.type !== 'RETURN')) {
-      return NextResponse.json(
-        { error: 'Não é possível registrar saída sem um registro de retorno' },
-        { status: 400 }
-      )
-    }
-
-    const record = await createTimeRecord({
-      userId: user.id,
-      type,
-      location,
-      device,
+    // Verificar último registro para validar sequência
+    const lastRecord = await prisma.timeRecord.findFirst({
+      where: { userId },
+      orderBy: { timestamp: 'desc' }
     })
 
-    return NextResponse.json({
-      ...record,
-      user: {
-        name: user.name,
-        employeeId: user.employeeId,
+    // Validar sequência de registros
+    if (lastRecord) {
+      const today = new Date()
+      const lastRecordDate = new Date(lastRecord.timestamp)
+      const isToday = 
+        today.getDate() === lastRecordDate.getDate() &&
+        today.getMonth() === lastRecordDate.getMonth() &&
+        today.getFullYear() === lastRecordDate.getFullYear()
+
+      if (isToday && lastRecord.type === type) {
+        return NextResponse.json(
+          { error: `Você já registrou ${type === 'ENTRY' ? 'entrada' : 'saída'} hoje` },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Criar registro de ponto
+    const timeRecord = await prisma.timeRecord.create({
+      data: {
+        userId,
+        type,
+        location: location || null,
+        device: 'kiosk',
+        timestamp: new Date(),
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            employeeId: true,
+            department: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
+    })
+
+    // Registrar log de autenticação do quiosque
+    await prisma.kioskAuthLog.create({
+      data: {
+        userId,
+        method: 'SYSTEM', // Método usado no quiosque
+        success: true,
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        userAgent: device?.userAgent || 'unknown',
+        message: `Registro de ponto: ${type}`
+      }
+    })
+
+    return NextResponse.json({ 
+      record: timeRecord,
+      message: 'Ponto registrado com sucesso'
     })
   } catch (error) {
-    console.error('Erro ao registrar ponto:', error)
+    console.error('Erro ao registrar ponto no quiosque:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao registrar ponto' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }
-} 
+}
+
