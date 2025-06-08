@@ -301,43 +301,7 @@ Sistema completo de registro de ponto com suporte web e modo quiosque, focado em
 - GitHub Actions (CI/CD)
 - Nginx (Proxy reverso)
 
-## Configuração do Banco de Dados
-```
-Host: painel0.sdbr.app
-Porta: 3477
-Banco: diinponto
-Usuário: postgres
-Senha: 9cc783b3a6f14b0f43cb
-```
 
-JWT String 
-Verified!
-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJANGMzc3MwSldUIiwibmFtZSI6IlJvZHJpZ28gSW5oYWlhIiwiYWRtaW4iOnRydWUsImlhdCI6MTc0NjQzNzQ0NCwiZXhwIjoxNzQ2NDQxMDQ0fQ.JiP4p8zgBn5vX60AMs14cGMdn85tx1eSvhxVt8f-s7o
-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJANGMzc3MwSldUIiwibmFtZSI6IlJvZHJpZ28gSW5oYWlhIiwiYWRtaW4iOnRydWUsImlhdCI6MTc0NjQzNzQ0NCwiZXhwIjoxNzQ2NDQxMDQ0fQ.JiP4p8zgBn5vX60AMs14cGMdn85tx1eSvhxVt8f-s7o
-Header 
-{
-  "typ": "JWT",
-  "alg": "HS256"
-}
-Payload 
-@4c3ss0JWT
-{
-  "sub": "@4c3ss0JWT",
-  "name": "Rodrigo Inhaia",
-  "admin": true,
-  "iat": 1746437444,
-  "exp": 1746441044
-}
-
-
-
-
-
-
-Base64 encoded 
-Signing key 
-NTNv7j0TuYARvmNMmWXo6fKvM4o6nv/aUi9ryX38ZH+L1bkrnD1ObOQ8JAUmHCBq7Iy7otZcyAagBLHVKvvYaIpmMuxmARQ97jUVG16Jkpkp1wXOPsrF9zwew6TpczyHkHgX5EuLg2MeBuiT/qJACs1J0apruOOJCg/gOtkjB4c=
-NTNv7j0TuYARvmNMmWXo6fKvM4o6nv/aUi9ryX38ZH+L1bkrnD1ObOQ8JAUmHCBq7Iy7otZcyAagBLHVKvvYaIpmMuxmARQ97jUVG16Jkpkp1wXOPsrF9zwew6TpczyHkHgX5EuLg2MeBuiT/qJACs1J0apruOOJCg/gOtkjB4c=
 
 ## Fluxo de Aprovação
 - [x] Implementar solicitação de correção
